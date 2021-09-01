@@ -1,0 +1,19 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Bangazon Reports</title>
+  </head>
+  <body>
+    <h1>Incomplete Orders</h1>
+
+    {% for order in completed_orders_list %}
+        <h2>Order: {{ order.order_id }}</h2>
+        <div>Customer: {{ order.customer_name }}</div>
+        <div>Total cost of all order items: {{ order.order_total_cost|stringformat:".2f" }}</div>
+        <div>Payment merchant name: {{ order.payment_merchant_name }}</div>
+        <div>Payment account number: {{ order.payment_account_number }}</div>
+    {% endfor %}
+  </body>
+</html>

@@ -1,0 +1,26 @@
+[
+    {
+        "pk": 1,
+        "model": "bangazonapi.likedproduct",
+        "fields": {
+            "customer_id": 7,
+            "product_id": 4
+        }
+    },
+    {
+        "pk": 2,
+        "model": "bangazonapi.likedproduct",
+        "fields": {
+            "customer_id": 7,
+            "product_id": 10
+        }
+    },
+    {
+        "pk": 3,
+        "model": "bangazonapi.likedproduct",
+        "fields": {
+            "customer_id": 6,
+            "product_id": 2
+        }
+    }
+]

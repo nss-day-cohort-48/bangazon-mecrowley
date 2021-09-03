@@ -8,7 +8,7 @@ from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework import serializers
 from rest_framework import status
-from bangazonapi.models import Product, Customer, ProductCategory
+from bangazonapi.models import Product, Customer, ProductCategory, LikedProduct
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.parsers import MultiPartParser, FormParser
 
@@ -22,6 +22,14 @@ class ProductSerializer(serializers.ModelSerializer):
                   'average_rating', 'can_be_rated', )
         depth = 1
 
+class LikedProductSerializer(serializers.ModelSerializer):
+    """JSON serializer for liked products"""
+
+    product = ProductSerializer
+    class Meta:
+        model = LikedProduct
+        fields = ('id', 'product')
+        depth = 1
 
 class Products(ViewSet):
     """Request handlers for Products in the Bangazon Platform"""
@@ -293,3 +301,55 @@ class Products(ViewSet):
             return Response(None, status=status.HTTP_204_NO_CONTENT)
 
         return Response(None, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    @action(methods=['get', 'post', 'delete'], detail=True)
+    def like(self, request, pk=None):
+        """Shopping cart manipulation"""
+
+        current_user = Customer.objects.get(user=request.auth.user)
+
+        if request.method == "POST":
+            """
+            @api {POST} /products/n/like POST new liked product
+            @apiName LikeProduct
+            @apiGroup Product
+            """
+            try:
+                likedproduct = LikedProduct()
+                likedproduct.customer = current_user
+                likedproduct.product = Product.objects.get(pk=pk)
+                likedproduct.save()
+
+                serializer = LikedProductSerializer(
+                    likedproduct, many=False, context={'request': request})
+
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+            except Product.DoesNotExist as ex:
+                return Response({'message': ex.args[0]}, status=status.HTTP_404_NOT_FOUND)
+        
+        if request.method == "DELETE":
+            """
+            @api {DELETE} /products/n/like DELETE liked product
+            @apiName UnlikeProduct
+            @apiGroup Product
+            """
+            try:
+                likedproduct = LikedProduct.objects.get(customer=current_user, product_id=pk)
+                likedproduct.delete()
+                return Response({}, status=status.HTTP_204_NO_CONTENT)
+            
+            except LikedProduct.DoesNotExist as ex:
+                return Response({'message': ex.args[0]}, status=status.HTTP_404_NOT_FOUND)
+
+        return Response({}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    @action(methods=['get'], detail=False)
+    def liked(self, request):
+        """Get products liked by customer"""
+
+        current_user = Customer.objects.get(user=request.auth.user)
+
+        likedproducts = LikedProduct.objects.filter(customer=current_user)
+        serializer = LikedProductSerializer(
+            likedproducts, many=True, context={'request': request})
+        return Response(serializer.data)
